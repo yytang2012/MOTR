@@ -31,4 +31,5 @@ python3 submit.py \
     --data_txt_path_train ./datasets/data_path/joint.train \
     --data_txt_path_val ./datasets/data_path/mot17.train \
     --resume ${EXP_DIR}/motr_final.pth \
-    --exp_name pub_submit_17
+    --exp_name pub_submit_17 \
+    --mot_path  /media/yytang/14T-Data/Dataset/MOT/JDE/

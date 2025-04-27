@@ -530,7 +530,7 @@ if __name__ == '__main__':
         shutil.copyfile(os.path.join(predict_path, '{}-{}-SDP.txt'.format(u,v)),os.path.join(predict_path,f'{repeated_seq_nums_i}.txt'))
 
     sub_dir = 'MOT17/images/train'
-    seq_nums = os.listdir('/data/Dataset/mot/MOT17/images/train')
+    seq_nums = os.listdir('/media/yytang/14T-Data/Dataset/MOT/JDE//MOT17/images/train')
     accs = []
     seqs = []
     for seq_num in seq_nums:

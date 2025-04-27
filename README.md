@@ -79,7 +79,10 @@ The codebase is built on top of [Deformable DETR](https://github.com/fundamental
 
     For example, if your CUDA version is 9.2, you could install pytorch and torchvision as following:
     ```bash
-    conda install pytorch=1.5.1 torchvision=0.6.1 cudatoolkit=9.2 -c pytorch
+#    conda install pytorch=1.5.1 torchvision=0.6.1 cudatoolkit=9.2 -c pytorch
+#    conda install pytorch torchvision cudatoolkit pytorch
+    conda install pytorch torchvision torchaudio pytorch-cuda=12.4 -c pytorch -c nvidia
+
     ```
   
 * Other requirements
