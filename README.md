@@ -1,12 +1,7 @@
 # MOTR: End-to-End Multiple-Object Tracking with TRansformer
 
-
-</div>
-
 [![PWC](https://img.shields.io/endpoint.svg?url=https://paperswithcode.com/badge/motr-end-to-end-multiple-object-tracking-with/multi-object-tracking-on-mot17)](https://paperswithcode.com/sota/multi-object-tracking-on-mot17?p=motr-end-to-end-multiple-object-tracking-with)
 [![PWC](https://img.shields.io/endpoint.svg?url=https://paperswithcode.com/badge/motr-end-to-end-multiple-object-tracking-with/multi-object-tracking-on-mot16)](https://paperswithcode.com/sota/multi-object-tracking-on-mot16?p=motr-end-to-end-multiple-object-tracking-with)
-
-</div>
 
 This repository is an official implementation of the paper [MOTR: End-to-End Multiple-Object Tracking with TRansformer](https://arxiv.org/pdf/2105.03247.pdf).
 
@@ -18,7 +13,7 @@ This repository is an official implementation of the paper [MOTR: End-to-End Mul
 <img src=./figs/motr.png/>
 </div>
 
-**Abstract.** The key challenge in multiple-object tracking task is temporal modeling of the object under track. Existing tracking-by-detection methods adopt simple heuristics, such as spatial or appearance similarity. Such methods, in spite of their commonality, are overly simple and lack the ability to learn temporal variations from data in an end-to-end manner.In this paper, we present MOTR, a fully end-to-end multiple-object tracking framework. It learns to model the long-range temporal variation of the objects. It performs temporal association implicitly and avoids previous explicit heuristics. Built upon DETR, MOTR introduces the concept of "track query". Each track query models the entire track of an object. It is transferred and updated frame-by-frame to perform iterative predictions in a seamless manner. Tracklet-aware label assignment is proposed for one-to-one assignment between track queries and object tracks. Temporal aggregation network together with collective average loss is further proposed to enhance the long-range temporal relation. Experimental results show that MOTR achieves competitive performance and can serve as a strong Transformer-based baseline for future research.
+**Abstract.** The key challenge in multiple-object tracking task is temporal modeling of the object under track. Existing tracking-by-detection methods adopt simple heuristics, such as spatial or appearance similarity. Such methods, in spite of their commonality, are overly simple and lack the ability to learn temporal variations from data in an end-to-end manner. In this paper, we present MOTR, a fully end-to-end multiple-object tracking framework. It learns to model the long-range temporal variation of the objects. It performs temporal association implicitly and avoids previous explicit heuristics. Built upon DETR, MOTR introduces the concept of "track query". Each track query models the entire track of an object. It is transferred and updated frame-by-frame to perform iterative predictions in a seamless manner. Tracklet-aware label assignment is proposed for one-to-one assignment between track queries and object tracks. Temporal aggregation network together with collective average loss is further proposed to enhance the long-range temporal relation. Experimental results show that MOTR achieves competitive performance and can serve as a strong Transformer-based baseline for future research.
 
 ## Updates
 - (2021/09/23) Report BDD100K results and release corresponding codes [motr_bdd100k](https://github.com/megvii-model/MOTR/tree/motr_bdd100k). 
@@ -62,27 +57,24 @@ The codebase is built on top of [Deformable DETR](https://github.com/fundamental
 
 ### Requirements
 
-* Linux, CUDA>=9.2, GCC>=5.4
+* Linux, CUDA>=12.0, GCC>=5.4
   
-* Python>=3.7
+* Python>=3.8
 
     We recommend you to use Anaconda to create a conda environment:
     ```bash
-    conda create -n deformable_detr python=3.7 pip
+    conda create -n deformable_detr python=3.8 pip
     ```
     Then, activate the environment:
     ```bash
     conda activate deformable_detr
     ```
   
-* PyTorch>=1.5.1, torchvision>=0.6.1 (following instructions [here](https://pytorch.org/))
+* PyTorch>=1.13.0, torchvision>=0.14.0 (following instructions [here](https://pytorch.org/))
 
-    For example, if your CUDA version is 9.2, you could install pytorch and torchvision as following:
+    For CUDA 12.4, install PyTorch and torchvision:
     ```bash
-#    conda install pytorch=1.5.1 torchvision=0.6.1 cudatoolkit=9.2 -c pytorch
-#    conda install pytorch torchvision cudatoolkit pytorch
     conda install pytorch torchvision torchaudio pytorch-cuda=12.4 -c pytorch -c nvidia
-
     ```
   
 * Other requirements
@@ -105,25 +97,25 @@ The codebase is built on top of [Deformable DETR](https://github.com/fundamental
 ```
 .
 ├── crowdhuman
-│   ├── images
-│   └── labels_with_ids
+│   ├── images
+│   └── labels_with_ids
 ├── MOT15
-│   ├── images
-│   ├── labels_with_ids
-│   ├── test
-│   └── train
+│   ├── images
+│   ├── labels_with_ids
+│   ├── test
+│   └── train
 ├── MOT17
-│   ├── images
-│   ├── labels_with_ids
+│   ├── images
+│   ├── labels_with_ids
 ├── DanceTrack
-│   ├── train
-│   ├── test
+│   ├── train
+│   ├── test
 ├── bdd100k
-│   ├── images
+│   ├── images
 │       ├── track
 │           ├── train
 │           ├── val
-│   ├── labels
+│   ├── labels
 │       ├── track
 │           ├── train
 │           ├── val
@@ -147,7 +139,6 @@ You can download COCO pretrained weights from [Deformable DETR](https://github.c
 
 ```bash 
 sh configs/r50_motr_train.sh
-
 ```
 
 #### Evaluation on MOT15
@@ -156,13 +147,11 @@ You can download the pretrained model of MOTR (the link is in "Main Results" ses
 
 ```bash 
 sh configs/r50_motr_eval.sh
-
 ```
 
 For visual in demo video, you can enable 'vis=True' in eval.py like:
 ```bash 
 det.detect(vis=True)
-
 ```
 
 #### Evaluation on MOT17
@@ -171,8 +160,14 @@ You can download the pretrained model of MOTR (the link is in "Main Results" ses
 
 ```bash
 sh configs/r50_motr_submit.sh
-
 ```
+
+Or use our simplified submission script:
+
+```bash
+python submit.py --dataset MOT17 --resume checkpoints/MOTR/motr_final.pth --mot_path /path/to/MOT/data
+```
+
 #### Evaluation on BDD100K
 
 For BDD100K dataset, please refer [motr_bdd100k](https://github.com/megvii-model/MOTR/tree/motr_bdd100k). 
@@ -208,6 +203,25 @@ python3 demo.py \
     --extra_track_attn \
     --resume ${EXP_DIR}/motr_final.pth \
     --input_video figs/demo.avi
+```
+
+## Troubleshooting
+
+### CUDA and PyTorch Compatibility
+
+If you encounter CUDA compatibility issues when building MultiScaleDeformableAttention, make sure:
+1. Your NVCC version matches your CUDA version: Run `nvcc --version` to check
+2. The CUDA_HOME environment variable is set correctly: `echo $CUDA_HOME` 
+3. You may need to specify the CUDA architecture with `TORCH_CUDA_ARCH_LIST` environment variable
+
+### Building Extensions on Modern GPUs
+
+For newer GPUs, you might need to specify architecture flags. Add this to your environment before building:
+
+```bash
+export TORCH_CUDA_ARCH_LIST="8.6" # For RTX 30 series
+# or
+export TORCH_CUDA_ARCH_LIST="8.9" # For RTX 40 series
 ```
 
 ## Citing MOTR

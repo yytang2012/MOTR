@@ -22,7 +22,6 @@
     You should have received a copy of the GNU General Public License
     along with this program.  If not, see <http://www.gnu.org/licenses/>.
 """
-from __future__ import print_function
 
 import os
 import numpy as np
@@ -71,9 +70,6 @@ COLORS_10 = [(144, 238, 144), (178, 34, 34), (221, 160, 221), (0, 255, 0), (0, 1
 
 def plot_one_box(x, img, color=None, label=None, score=None, line_thickness=None):
     # Plots one bounding box on image img
-
-    # tl = line_thickness or round(
-    #     0.002 * max(img.shape[0:2])) + 1  # line thickness
     tl = 2
     color = color or [random.randint(0, 255) for _ in range(3)]
     c1, c2 = (int(x[0]), int(x[1])), (int(x[2]), int(x[3]))
@@ -97,6 +93,8 @@ def plot_one_box(x, img, color=None, label=None, score=None, line_thickness=None
 '''
 deep sort 中的画图方法，在原图上进行作画
 '''
+
+
 def draw_bboxes(ori_img, bbox, identities=None, offset=(0, 0), cvt_color=False):
     if cvt_color:
         ori_img = cv2.cvtColor(np.asarray(ori_img), cv2.COLOR_RGB2BGR)
@@ -200,7 +198,7 @@ class MOTR(object):
 
         for i in range(len(dt_instances)):
             idx = dt_instances.obj_idxes[i]
-            bbox = np.concatenate([dt_instances.boxes[i], dt_instances.scores[i:i+1]], axis=-1)
+            bbox = np.concatenate([dt_instances.boxes[i], dt_instances.scores[i:i + 1]], axis=-1)
             label = dt_instances.labels[i]
             if label == 0:
                 # get a positive track.
@@ -229,8 +227,9 @@ class MOTR(object):
             label = dt_instances.labels[i]
             if label == 0:
                 id = dt_instances.obj_idxes[i]
-                box_with_score = np.concatenate([dt_instances.boxes[i], dt_instances.scores[i:i+1]], axis=-1)
-                ret.append(np.concatenate((box_with_score, [id + 1])).reshape(1, -1))  # +1 as MOT benchmark requires positive
+                box_with_score = np.concatenate([dt_instances.boxes[i], dt_instances.scores[i:i + 1]], axis=-1)
+                ret.append(
+                    np.concatenate((box_with_score, [id + 1])).reshape(1, -1))  # +1 as MOT benchmark requires positive
 
         if len(ret) > 0:
             return np.concatenate(ret)
@@ -318,7 +317,7 @@ def filter_pub_det(res_file, pub_det_file, filter_iou=False):
                     pub_dt_centers = (pub_dt_boxes[:, :2] + pub_dt_boxes[:, 2:4]) * 0.5
                     x_inside = (dt_box[0, 0] <= pub_dt_centers[:, 0]) & (dt_box[0, 2] >= pub_dt_centers[:, 0])
                     y_inside = (dt_box[0, 1] <= pub_dt_centers[:, 1]) & (dt_box[0, 3] >= pub_dt_centers[:, 1])
-                    center_inside:np.ndarray = x_inside & y_inside
+                    center_inside: np.ndarray = x_inside & y_inside
                     if not center_inside.any():
                         num_filter_box += 1
                         print("filter init box {} {}".format(frame_id, obj_id))
@@ -328,6 +327,7 @@ def filter_pub_det(res_file, pub_det_file, filter_iou=False):
             f.write(line)
 
     print("totally {} boxes are filtered.".format(num_filter_box))
+
 
 class ListImgDataset(Dataset):
     def __init__(self, img_list) -> None:
@@ -365,7 +365,7 @@ class ListImgDataset(Dataset):
 
     def __len__(self):
         return len(self.img_list)
-    
+
     def __getitem__(self, index):
         img, targets = self.load_img_from_file(self.img_list[index])
         return self.init_img(img)
@@ -428,16 +428,18 @@ class Detector(object):
     @staticmethod
     def visualize_img_with_bbox(img_path, img, dt_instances: Instances, ref_pts=None, gt_boxes=None):
         if dt_instances.has('scores'):
-            img_show = draw_bboxes(img, np.concatenate([dt_instances.boxes, dt_instances.scores.reshape(-1, 1)], axis=-1), dt_instances.obj_idxes)
+            img_show = draw_bboxes(img,
+                                   np.concatenate([dt_instances.boxes, dt_instances.scores.reshape(-1, 1)], axis=-1),
+                                   dt_instances.obj_idxes)
         else:
             img_show = draw_bboxes(img, dt_instances.boxes, dt_instances.obj_idxes)
         if ref_pts is not None:
             img_show = draw_points(img_show, ref_pts)
         if gt_boxes is not None:
-            img_show = draw_bboxes(img_show, gt_boxes, identities=np.ones((len(gt_boxes), )) * -1)
+            img_show = draw_bboxes(img_show, gt_boxes, identities=np.ones((len(gt_boxes),)) * -1)
         cv2.imwrite(img_path, img_show)
 
-    def detect(self, prob_threshold=0.7, area_threshold=100):
+    def detect(self, prob_threshold=0.7, area_threshold=100, vis=False):
         last_dt_embedding = None
         total_dts = 0
         total_occlusion_dts = 0
@@ -474,15 +476,106 @@ class Detector(object):
                                frame_id=(i + 1),
                                bbox_xyxy=tracker_outputs[:, :4],
                                identities=tracker_outputs[:, 5])
-        # filter_pub_det(os.path.join(self.predict_path, f'{self.seq_num}.txt'),
-        #                 f'/data/Dataset/mot/MOT17/images/test/{self.seq_num}/det/det.txt')
+
+            if vis:
+                # Visualize the current frame with detections
+                vis_path = os.path.join(self.save_path, f"{i:06d}.jpg")
+                self.visualize_img_with_bbox(vis_path, ori_img, dt_instances, all_ref_pts)
+
         print("totally {} dts {} occlusion dts".format(total_dts, total_occlusion_dts))
 
 
-if __name__ == '__main__':
+def parse_args():
+    # Create our custom parser for MOTR submit script
+    parser = argparse.ArgumentParser('MOTR submit script', add_help=False)
 
-    parser = argparse.ArgumentParser('DETR training and evaluation script', parents=[get_args_parser()])
-    args = parser.parse_args()
+    # Basic parameters
+    parser.add_argument('--exp_name', type=str, default='pub_submit_17',
+                        help='experiment name, used for output directory')
+    parser.add_argument('--output_dir', type=str, default='exps/e2e_motr_r50_joint',
+                        help='path to save outputs')
+    parser.add_argument('--mot_path', type=str, default='/media/yytang/14T-Data/Dataset/MOT/JDE/',
+                        help='path to MOT dataset')
+
+    # Model parameters
+    parser.add_argument('--meta_arch', type=str, default='motr',
+                        help='meta architecture name')
+    parser.add_argument('--resume', type=str, default='checkpoints/MOTR/motr_final.pth',
+                        help='path to checkpoint file')
+    parser.add_argument('--pretrained', type=str, default='checkpoints/MOTR/motr_final.pth',
+                        help='path to pretrained model')
+    parser.add_argument('--with_box_refine', action='store_true', default=True,
+                        help='with box refinement')
+
+    # Dataset parameters
+    parser.add_argument('--dataset', type=str, default='MOT17',
+                        help='dataset name: MOT17, MOT15, or DanceTrack')
+    parser.add_argument('--dataset_file', type=str, default='e2e_joint',
+                        help='dataset file name')
+    parser.add_argument('--data_txt_path_train', type=str, default='./datasets/data_path/joint.train',
+                        help='path to train data txt file')
+    parser.add_argument('--data_txt_path_val', type=str, default='./datasets/data_path/mot17.train',
+                        help='path to val data txt file')
+
+    # Training parameters
+    parser.add_argument('--lr', type=float, default=2e-4,
+                        help='learning rate')
+    parser.add_argument('--lr_backbone', type=float, default=2e-5,
+                        help='learning rate for backbone')
+    parser.add_argument('--batch_size', type=int, default=1,
+                        help='batch size')
+    parser.add_argument('--epoch', type=int, default=200,
+                        help='number of epochs')
+    parser.add_argument('--lr_drop', type=int, default=100,
+                        help='epoch to drop learning rate')
+
+    # Sampling parameters
+    parser.add_argument('--sample_mode', type=str, default='random_interval',
+                        help='sampling mode')
+    parser.add_argument('--sample_interval', type=int, default=10,
+                        help='sampling interval')
+    parser.add_argument('--sampler_steps', nargs='+', type=int, default=[50, 90, 150],
+                        help='steps for sampler length adjustment')
+    parser.add_argument('--sampler_lengths', nargs='+', type=int, default=[2, 3, 4, 5],
+                        help='lengths for sampler')
+
+    # Model specific parameters
+    parser.add_argument('--update_query_pos', action='store_true', default=True,
+                        help='update query position')
+    parser.add_argument('--merger_dropout', type=float, default=0.0,
+                        help='dropout rate for merger')
+    parser.add_argument('--dropout', type=float, default=0.0,
+                        help='dropout rate')
+    parser.add_argument('--random_drop', type=float, default=0.1,
+                        help='random drop rate')
+    parser.add_argument('--fp_ratio', type=float, default=0.3,
+                        help='false positive ratio')
+    parser.add_argument('--query_interaction_layer', type=str, default='QIM',
+                        help='query interaction layer type')
+    parser.add_argument('--extra_track_attn', action='store_true', default=True,
+                        help='use extra track attention')
+
+    # Detection parameters
+    parser.add_argument('--prob_threshold', type=float, default=0.7,
+                        help='probability threshold for detection')
+    parser.add_argument('--area_threshold', type=int, default=100,
+                        help='area threshold for detection')
+    parser.add_argument('--visualize', action='store_true', default=False,
+                        help='visualize detection results')
+
+    # Get the default DETR arguments and merge with ours
+    detr_parser = get_args_parser()
+    # Combine the parsers
+    for action in detr_parser._actions:
+        if not any(action.dest == existing_action.dest for existing_action in parser._actions):
+            parser._add_action(action)
+
+    return parser.parse_args()
+
+
+if __name__ == '__main__':
+    args = parse_args()
+
     if args.output_dir:
         Path(args.output_dir).mkdir(parents=True, exist_ok=True)
 
@@ -493,45 +586,56 @@ if __name__ == '__main__':
     detr.eval()
     detr = detr.cuda()
 
-    # '''for MOT17 submit''' 
-    sub_dir = 'MOT17/images/test'
-    seq_nums = ['MOT17-01-SDP',
-                'MOT17-03-SDP',
-                'MOT17-06-SDP',
-                'MOT17-07-SDP',
-                'MOT17-08-SDP',
-                'MOT17-12-SDP',
-                'MOT17-14-SDP']
+    # Process MOT17 test sequences
+    if args.dataset == 'MOT17':
+        sub_dir = 'MOT17/images/test'
+        seq_nums = ['MOT17-01-SDP',
+                    'MOT17-03-SDP',
+                    'MOT17-06-SDP',
+                    'MOT17-07-SDP',
+                    'MOT17-08-SDP',
+                    'MOT17-12-SDP',
+                    'MOT17-14-SDP']
+    elif args.dataset == 'MOT15':
+        sub_dir = 'MOT15/images/test'
+        seq_nums = os.listdir(os.path.join(args.mot_path, sub_dir))
+    elif args.dataset == 'DanceTrack':
+        sub_dir = 'DanceTrack/test'
+        seq_nums = os.listdir(os.path.join(args.mot_path, sub_dir))
+    else:
+        raise ValueError(f"Dataset {args.dataset} not supported")
 
     for seq_num in seq_nums:
+        print(f"Processing sequence: {seq_num}")
         det = Detector(args, model=detr, seq_num=seq_num)
-        det.detect()
+        det.detect(prob_threshold=args.prob_threshold,
+                   area_threshold=args.area_threshold,
+                   vis=args.visualize)
 
-    """copy reuslts for same sequences"""
-    repeated_seq_nums = ['MOT17-01-DPM',
-                        'MOT17-03-DPM',
-                        'MOT17-06-DPM',
-                        'MOT17-07-DPM',
-                        'MOT17-08-DPM',
-                        'MOT17-12-DPM',
-                        'MOT17-14-DPM',
-                        'MOT17-01-FRCNN',
-                        'MOT17-03-FRCNN',
-                        'MOT17-06-FRCNN',
-                        'MOT17-07-FRCNN',
-                        'MOT17-08-FRCNN',
-                        'MOT17-12-FRCNN',
-                        'MOT17-14-FRCNN']
-    
-    print('copy reuslts for same sequences: ')
-    predict_path = os.path.join(args.output_dir, args.exp_name)
-    for repeated_seq_nums_i in repeated_seq_nums:
-        u, v = repeated_seq_nums_i.split('-')[:-1]
-        shutil.copyfile(os.path.join(predict_path, '{}-{}-SDP.txt'.format(u,v)),os.path.join(predict_path,f'{repeated_seq_nums_i}.txt'))
+    # For MOT17 dataset, copy results for repeated sequences with different detectors
+    if args.dataset == 'MOT17':
+        print('Copying results for same sequences with different detectors...')
+        predict_path = os.path.join(args.output_dir, args.exp_name)
+        repeated_seq_nums = ['MOT17-01-DPM',
+                             'MOT17-03-DPM',
+                             'MOT17-06-DPM',
+                             'MOT17-07-DPM',
+                             'MOT17-08-DPM',
+                             'MOT17-12-DPM',
+                             'MOT17-14-DPM',
+                             'MOT17-01-FRCNN',
+                             'MOT17-03-FRCNN',
+                             'MOT17-06-FRCNN',
+                             'MOT17-07-FRCNN',
+                             'MOT17-08-FRCNN',
+                             'MOT17-12-FRCNN',
+                             'MOT17-14-FRCNN']
 
-    sub_dir = 'MOT17/images/train'
-    seq_nums = os.listdir('/media/yytang/14T-Data/Dataset/MOT/JDE//MOT17/images/train')
-    accs = []
-    seqs = []
-    for seq_num in seq_nums:
-        shutil.copyfile(os.path.join(args.mot_path, sub_dir, f'{seq_num}/gt/gt.txt'),os.path.join(predict_path,f'{seq_num}.txt'))
+        for repeated_seq_num in repeated_seq_nums:
+            u, v = repeated_seq_num.split('-')[:-1]
+            src_file = os.path.join(predict_path, f'{u}-{v}-SDP.txt')
+            dst_file = os.path.join(predict_path, f'{repeated_seq_num}.txt')
+            print(f"Copying {src_file} to {dst_file}")
+            shutil.copyfile(src_file, dst_file)
+
+        print(f"All results saved to {predict_path}")
